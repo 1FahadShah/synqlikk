@@ -60,7 +60,7 @@ def edit_task(task_id):
     flash("Task updated successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
 
-@main_bp.route("/task/delete/<task_id>")
+@main_bp.route("/task/delete/<task_id>", methods=["POST"])
 @login_required
 def remove_task(task_id):
     delete_task(current_app.config["DB_PATH"], task_id)
@@ -86,7 +86,7 @@ def edit_note(note_id):
     flash("Note updated successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
 
-@main_bp.route("/note/delete/<note_id>")
+@main_bp.route("/note/delete/<note_id>", methods=["POST"])
 @login_required
 def remove_note(note_id):
     delete_note(current_app.config["DB_PATH"], note_id)
@@ -118,7 +118,7 @@ def edit_expense(expense_id):
     flash("Expense updated successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
 
-@main_bp.route("/expense/delete/<expense_id>")
+@main_bp.route("/expense/delete/<expense_id>", methods=["POST"])
 @login_required
 def remove_expense(expense_id):
     delete_expense(current_app.config["DB_PATH"], expense_id)
