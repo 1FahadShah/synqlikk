@@ -22,4 +22,5 @@ def get_db_connection(db_path: str):
     return connect
 
 
-
+def current_timestamp():
+    return datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
