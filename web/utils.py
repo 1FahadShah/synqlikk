@@ -5,7 +5,7 @@ from datetime import datetime
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "db" / "schema.sql"
 
 
-# Initialize the server
+# Initialize the server database
 def init_server_db(db_path: str):
     db_file = Path(db_path)
     if not db_file.exists():
@@ -15,4 +15,6 @@ def init_server_db(db_path: str):
         print(f"[SERVER DB] Initialized at: {db_file}")
     else:
         print(f"[SERVER DB] Already exists at: {db_file}")
+
+def get_db_connection(db_path)
 
