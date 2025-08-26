@@ -16,5 +16,10 @@ def init_server_db(db_path: str):
     else:
         print(f"[SERVER DB] Already exists at: {db_file}")
 
-def get_db_connection(db_path)
+def get_db_connection(db_path: str):
+    connect = sqlite3.connect(db_path)
+    connect.row_factory = sqlite3.Row
+    return connect
+
+
 
