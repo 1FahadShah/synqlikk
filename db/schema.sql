@@ -55,3 +55,22 @@ CREATE TABLE IF NOT EXISTS notes (
 );
 CREATE INDEX IF NOT EXISTS idx_notes_user_lastmod ON notes(user_id, last_modified);
 
+
+-- ============================================
+-- Expenses Table
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS expenses (
+  id TEXT PRIMARY KEY,               -- UUID v4
+  user_id TEXT NOT NULL,
+  amount REAL NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT,
+  date TEXT NOT NULL,                -- ISO 8601 Date YYYY-MM-DD
+  is_deleted INTEGER DEFAULT 0,
+  deleted_at TEXT,
+  last_modified TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+  synced INTEGER DEFAULT 0,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_expenses_user_lastmod ON expenses(user_id, last_modified);
