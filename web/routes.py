@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, redirect, url_for, flash, request
+from flask import Blueprint, render_template, session, redirect, url_for, flash, request, current_app
 from web.models import get_tasks, create_task, update_task, delete_task
 from web.models import get_notes, create_note, update_note, delete_note
 from web.models import get_expenses, create_expense, update_expense, delete_expense
