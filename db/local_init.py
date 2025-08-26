@@ -10,5 +10,5 @@ def init_local_db():
             conn.executescript(f.read())
     print(f"[LOCAL DB] Initialized at: {DB_PATH}")
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     init_local_db()
