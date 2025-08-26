@@ -25,3 +25,6 @@ coverage==7.5.1
 
 # Production Web Server for Deployment
 gunicorn==22.0.0
+
+# Email Validtion package for WTForms
+email-validator==2.1.1
