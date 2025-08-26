@@ -37,3 +37,21 @@ CREATE TABLE IF NOT EXISTS tasks (
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_user_lastmod ON tasks(user_id, last_modified);
+
+
+-- ============================================
+-- Notes Table
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS notes (
+  id TEXT PRIMARY KEY,               -- UUID v4
+  user_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_deleted INTEGER DEFAULT 0,
+  deleted_at TEXT,
+  last_modified TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+  synced INTEGER DEFAULT 0,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+CREATE INDEX IF NOT EXISTS idx_notes_user_lastmod ON notes(user_id, last_modified);
+
