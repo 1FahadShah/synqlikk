@@ -21,6 +21,9 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(sync_bp)
 
+    # Tell Flask that the root URL ('/') should point to the dashboard.
+    app.add_url_rule('/', endpoint='main_bp.dashboard')
+
     return app
 
 
