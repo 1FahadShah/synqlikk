@@ -20,21 +20,45 @@ def login_required(f):
     return decorated
 
 # --------------------------
-# Dashboard
+# Dashboard (Summary View)
 # --------------------------
 @main_bp.route("/dashboard")
 @login_required
 def dashboard():
     user_id = session["user_id"]
-
     tasks = get_tasks(current_app.config["DB_PATH"], user_id)
     notes = get_notes(current_app.config["DB_PATH"], user_id)
     expenses = get_expenses(current_app.config["DB_PATH"], user_id)
-
     return render_template("dashboard.html", tasks=tasks, notes=notes, expenses=expenses)
 
 # --------------------------
-# Task CRUD
+# Dedicated Pages
+# --------------------------
+@main_bp.route("/tasks")
+@login_required
+def tasks_page():
+    tasks = get_tasks(current_app.config["DB_PATH"], session["user_id"])
+    return render_template("tasks.html", tasks=tasks)
+
+@main_bp.route("/notes")
+@login_required
+def notes_page():
+    notes = get_notes(current_app.config["DB_PATH"], session["user_id"])
+    return render_template("notes.html", notes=notes)
+
+@main_bp.route("/expenses")
+@login_required
+def expenses_page():
+    expenses = get_expenses(current_app.config["DB_PATH"], session["user_id"])
+    return render_template("expenses.html", expenses=expenses)
+
+@main_bp.route("/profile")
+@login_required
+def profile_page():
+    return render_template("profile.html", user_id=session["user_id"])
+
+# --------------------------
+# Tasks CRUD
 # --------------------------
 @main_bp.route("/task/add", methods=["POST"])
 @login_required
@@ -44,7 +68,6 @@ def add_task():
     description = request.form.get("description")
     due_date = request.form.get("due_date")
     priority = int(request.form.get("priority", 2))
-
     create_task(current_app.config["DB_PATH"], user_id, title, description, due_date, priority)
     flash("Task added successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
@@ -57,7 +80,6 @@ def edit_task(task_id):
     due_date = request.form.get("due_date")
     priority = int(request.form.get("priority", 2))
     status = request.form.get("status")
-
     update_task(current_app.config["DB_PATH"], task_id, title, description, due_date, priority, status)
     flash("Task updated successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
@@ -105,7 +127,6 @@ def add_expense():
     category = request.form.get("category")
     description = request.form.get("description")
     date = request.form.get("date")
-
     create_expense(current_app.config["DB_PATH"], session["user_id"], amount, category, description, date)
     flash("Expense added successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
@@ -117,7 +138,6 @@ def edit_expense(expense_id):
     category = request.form.get("category")
     description = request.form.get("description")
     date = request.form.get("date")
-
     update_expense(current_app.config["DB_PATH"], expense_id, amount, category, description, date)
     flash("Expense updated successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
