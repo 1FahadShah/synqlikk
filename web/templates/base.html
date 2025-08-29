@@ -67,21 +67,21 @@
           </li>
           <li class="nav-item">
             <a
-              href="{{ url_for('main_bp.tasks') }}"
+              href="{{ url_for('main_bp.tasks_page') }}"
               class="nav-link {% if request.endpoint == 'main_bp.tasks' %}active{% endif %}"
               >Tasks</a
             >
           </li>
           <li class="nav-item">
             <a
-              href="{{ url_for('main_bp.notes') }}"
+              href="{{ url_for('main_bp.notes_page') }}"
               class="nav-link {% if request.endpoint == 'main_bp.notes' %}active{% endif %}"
               >Notes</a
             >
           </li>
           <li class="nav-item">
             <a
-              href="{{ url_for('main_bp.expenses') }}"
+              href="{{ url_for('main_bp.expenses_page') }}"
               class="nav-link {% if request.endpoint == 'main_bp.expenses' %}active{% endif %}"
               >Expenses</a
             >
