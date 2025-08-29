@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, session, redirect, url_for, flash,
 from web.models import get_tasks, create_task, update_task, delete_task
 from web.models import get_notes, create_note, update_note, delete_note
 from web.models import get_expenses, create_expense, update_expense, delete_expense
+from web.models import get_user_by_id
 from web.utils import current_timestamp
 
 main_bp = Blueprint("main_bp", __name__)
@@ -55,7 +56,9 @@ def expenses_page():
 @main_bp.route("/profile")
 @login_required
 def profile_page():
-    return render_template("profile.html", user_id=session["user_id"])
+    user_id = session["user_id"]
+    user = get_user_by_id(current_app.config["DB_PATH"], user_id)
+    return render_template("profile.html", user=user)
 
 # --------------------------
 # Tasks CRUD
