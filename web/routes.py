@@ -44,11 +44,12 @@ def add_task():
     description = request.form.get("description")
     due_date = request.form.get("due_date")
     priority = int(request.form.get("priority", 2))
+
     create_task(current_app.config["DB_PATH"], user_id, title, description, due_date, priority)
     flash("Task added successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
 
-@main_bp.route("/task/update/<task_id>", methods=["POST"])
+@main_bp.route("/task/edit/<task_id>", methods=["POST"])
 @login_required
 def edit_task(task_id):
     title = request.form.get("title")
@@ -56,6 +57,7 @@ def edit_task(task_id):
     due_date = request.form.get("due_date")
     priority = int(request.form.get("priority", 2))
     status = request.form.get("status")
+
     update_task(current_app.config["DB_PATH"], task_id, title, description, due_date, priority, status)
     flash("Task updated successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
@@ -78,7 +80,7 @@ def add_note():
     flash("Note added successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
 
-@main_bp.route("/note/update/<note_id>", methods=["POST"])
+@main_bp.route("/note/edit/<note_id>", methods=["POST"])
 @login_required
 def edit_note(note_id):
     content = request.form.get("content")
@@ -103,17 +105,19 @@ def add_expense():
     category = request.form.get("category")
     description = request.form.get("description")
     date = request.form.get("date")
+
     create_expense(current_app.config["DB_PATH"], session["user_id"], amount, category, description, date)
     flash("Expense added successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
 
-@main_bp.route("/expense/update/<expense_id>", methods=["POST"])
+@main_bp.route("/expense/edit/<expense_id>", methods=["POST"])
 @login_required
 def edit_expense(expense_id):
     amount = float(request.form.get("amount"))
     category = request.form.get("category")
     description = request.form.get("description")
     date = request.form.get("date")
+
     update_expense(current_app.config["DB_PATH"], expense_id, amount, category, description, date)
     flash("Expense updated successfully", "success")
     return redirect(url_for("main_bp.dashboard"))
