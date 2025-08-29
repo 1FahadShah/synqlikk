@@ -1,0 +1,227 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mt-4">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="fw-bold">💰 Expenses</h2>
+    <button
+      class="btn btn-success btn-sm"
+      data-bs-toggle="modal"
+      data-bs-target="#addExpenseModal"
+    >
+      <i class="bi bi-plus-circle"></i> Add Expense
+    </button>
+  </div>
+
+  <!-- Filters & Search -->
+  <form method="GET" class="row g-3 mb-4">
+    <div class="col-md-4">
+      <input
+        type="text"
+        name="q"
+        class="form-control"
+        placeholder="Search description/category..."
+        value="{{ request.args.get('q', '') }}"
+      />
+    </div>
+    <div class="col-md-3">
+      <input
+        type="date"
+        name="start_date"
+        class="form-control"
+        value="{{ request.args.get('start_date', '') }}"
+      />
+    </div>
+    <div class="col-md-3">
+      <input
+        type="date"
+        name="end_date"
+        class="form-control"
+        value="{{ request.args.get('end_date', '') }}"
+      />
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button class="btn btn-secondary w-50" type="submit">Filter</button>
+      <a href="{{ url_for('main_bp.expenses') }}" class="btn btn-light w-50"
+        >Reset</a
+      >
+    </div>
+  </form>
+
+  <!-- Expenses Table -->
+  <div class="table-responsive">
+    <table class="table table-dark table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Amount</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Date</th>
+          <th>Last Modified</th>
+          <th width="150">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if expenses %} {% for expense in expenses %}
+        <tr>
+          <td>${{ "%.2f"|format(expense.amount) }}</td>
+          <td>{{ expense.category }}</td>
+          <td>{{ expense.description or "—" }}</td>
+          <td>{{ expense.date }}</td>
+          <td>{{ expense.last_modified or "-" }}</td>
+          <td>
+            <!-- Edit Button -->
+            <button
+              class="btn btn-warning btn-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#editExpenseModal{{ expense.id }}"
+            >
+              <i class="bi bi-pencil-square"></i>
+            </button>
+
+            <!-- Delete Button -->
+            <form
+              action="{{ url_for('main_bp.remove_expense', expense_id=expense.id) }}"
+              method="POST"
+              class="d-inline"
+              onsubmit="return confirm('Delete this expense?');"
+            >
+              <button type="submit" class="btn btn-danger btn-sm">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+
+        <!-- Edit Expense Modal -->
+        <div
+          class="modal fade"
+          id="editExpenseModal{{ expense.id }}"
+          tabindex="-1"
+          aria-labelledby="editExpenseLabel{{ expense.id }}"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+              <div class="modal-header">
+                <h5 class="modal-title">Edit Expense</h5>
+                <button
+                  type="button"
+                  class="btn-close btn-close-white"
+                  data-bs-dismiss="modal"
+                ></button>
+              </div>
+              <form
+                action="{{ url_for('main_bp.edit_expense', expense_id=expense.id) }}"
+                method="POST"
+              >
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Amount</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      class="form-control"
+                      name="amount"
+                      value="{{ expense.amount }}"
+                      required
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Category</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="category"
+                      value="{{ expense.category }}"
+                      required
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" name="description">
+{{ expense.description }}</textarea
+                    >
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Date</label>
+                    <input
+                      type="date"
+                      class="form-control"
+                      name="date"
+                      value="{{ expense.date }}"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %} {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted">
+            No expenses recorded yet.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div
+  class="modal fade"
+  id="addExpenseModal"
+  tabindex="-1"
+  aria-labelledby="addExpenseModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-light">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Expense</h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form action="{{ url_for('main_bp.add_expense') }}" method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Amount</label>
+            <input
+              type="number"
+              step="0.01"
+              class="form-control"
+              name="amount"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Category</label>
+            <input type="text" class="form-control" name="category" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="date" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Add Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
