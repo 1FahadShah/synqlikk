@@ -34,6 +34,14 @@ def get_user_by_email(db_path, email: str):
             (email,)
         ).fetchone()
 
+def get_user_by_id(db_path, user_id: str):
+    """Fetch a user by ID."""
+    with get_db_connection(db_path) as conn:
+        return conn.execute(
+            "SELECT * FROM users WHERE id=? AND is_deleted=0",
+            (user_id,)
+        ).fetchone()
+
 # ========================
 # Tasks
 # ========================
