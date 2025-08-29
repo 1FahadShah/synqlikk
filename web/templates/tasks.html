@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Tasks</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">+ Add Task</button>
+  </div>
+
+  <!-- Filters & Search -->
+  <form method="GET" class="row g-3 mb-4">
+    <div class="col-md-3">
+      <input type="text" name="q" class="form-control" placeholder="Search by title..." value="{{ request.args.get('q', '') }}">
+    </div>
+    <div class="col-md-2">
+      <select name="status" class="form-select">
+        <option value="">All Statuses</option>
+        <option value="Pending" {% if request.args.get('status') == 'Pending' %}selected{% endif %}>Pending</option>
+        <option value="In Progress" {% if request.args.get('status') == 'In Progress' %}selected{% endif %}>In Progress</option>
+        <option value="Completed" {% if request.args.get('status') == 'Completed' %}selected{% endif %}>Completed</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="priority" class="form-select">
+        <option value="">All Priorities</option>
+        <option value="1" {% if request.args.get('priority') == '1' %}selected{% endif %}>High</option>
+        <option value="2" {% if request.args.get('priority') == '2' %}selected{% endif %}>Medium</option>
+        <option value="3" {% if request.args.get('priority') == '3' %}selected{% endif %}>Low</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <input type="date" name="due_date" class="form-control" value="{{ request.args.get('due_date', '') }}">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button class="btn btn-secondary w-50" type="submit">Apply</button>
+      <a href="{{ url_for('main_bp.tasks') }}" class="btn btn-light w-50">Reset</a>
+    </div>
+  </form>
+
+  <!-- Tasks Table -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      {% if tasks %}
+      <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Due Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for task in tasks %}
+            <tr>
+              <td>{{ task.title }}</td>
+              <td>{{ task.description or "-" }}</td>
+              <td>
+                {% if task.priority == 1 %}
+                  <span class="badge bg-danger">High</span>
+                {% elif task.priority == 2 %}
+                  <span class="badge bg-warning text-dark">Medium</span>
+                {% else %}
+                  <span class="badge bg-success">Low</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if task.status == "Completed" %}
+                  <span class="badge bg-success">Completed</span>
+                {% elif task.status == "In Progress" %}
+                  <span class="badge bg-info text-dark">In Progress</span>
+                {% else %}
+                  <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+              </td>
+              <td>{{ task.due_date or "-" }}</td>
+              <td>
+                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editTask{{ task.id }}">
+                  Edit
+                </button>
+                <form method="POST" action="{{ url_for('main_bp.remove_task', task_id=task.id) }}" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                  <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+
+            <!-- Edit Task Modal -->
+            <div class="modal fade" id="editTask{{ task.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <form method="POST" action="{{ url_for('main_bp.edit_task', task_id=task.id) }}">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Task</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label>Title</label>
+                        <input type="text" name="title" class="form-control" value="{{ task.title }}" required>
+                      </div>
+                      <div class="mb-3">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control">{{ task.description }}</textarea>
+                      </div>
+                      <div class="mb-3">
+                        <label>Due Date</label>
+                        <input type="date" name="due_date" class="form-control" value="{{ task.due_date }}">
+                      </div>
+                      <div class="mb-3">
+                        <label>Priority</label>
+                        <select name="priority" class="form-select">
+                          <option value="1" {% if task.priority==1 %}selected{% endif %}>High</option>
+                          <option value="2" {% if task.priority==2 %}selected{% endif %}>Medium</option>
+                          <option value="3" {% if task.priority==3 %}selected{% endif %}>Low</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label>Status</label>
+                        <select name="status" class="form-select">
+                          <option value="Pending" {% if task.status=="Pending" %}selected{% endif %}>Pending</option>
+                          <option value="In Progress" {% if task.status=="In Progress" %}selected{% endif %}>In Progress</option>
+                          <option value="Completed" {% if task.status=="Completed" %}selected{% endif %}>Completed</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted text-center">No tasks available.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('main_bp.add_task') }}">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Task</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>Title</label>
+            <input type="text" name="title" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label>Description</label>
+            <textarea name="description" class="form-control"></textarea>
+          </div>
+          <div class="mb-3">
+            <label>Due Date</label>
+            <input type="date" name="due_date" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label>Priority</label>
+            <select name="priority" class="form-select">
+              <option value="1">High</option>
+              <option value="2">Medium</option>
+              <option value="3">Low</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label>Status</label>
+            <select name="status" class="form-select">
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Add Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
