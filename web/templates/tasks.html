@@ -1,24 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
+
+  <!-- Header & Add Button -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Tasks</h2>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">+ Add Task</button>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+      + Add Task
+    </button>
   </div>
 
   <!-- Filters & Search -->
   <form method="GET" class="row g-3 mb-4">
+    <!-- Search -->
     <div class="col-md-3">
       <input type="text" name="q" class="form-control" placeholder="Search by title..." value="{{ request.args.get('q', '') }}">
     </div>
+
+    <!-- Status -->
     <div class="col-md-2">
       <select name="status" class="form-select">
         <option value="">All Statuses</option>
-        <option value="Pending" {% if request.args.get('status') == 'Pending' %}selected{% endif %}>Pending</option>
-        <option value="In Progress" {% if request.args.get('status') == 'In Progress' %}selected{% endif %}>In Progress</option>
-        <option value="Completed" {% if request.args.get('status') == 'Completed' %}selected{% endif %}>Completed</option>
+        <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>In Progress</option>
+        <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Completed</option>
       </select>
     </div>
+
+    <!-- Priority -->
     <div class="col-md-2">
       <select name="priority" class="form-select">
         <option value="">All Priorities</option>
@@ -27,9 +36,13 @@
         <option value="3" {% if request.args.get('priority') == '3' %}selected{% endif %}>Low</option>
       </select>
     </div>
+
+    <!-- Due Date -->
     <div class="col-md-2">
       <input type="date" name="due_date" class="form-control" value="{{ request.args.get('due_date', '') }}">
     </div>
+
+    <!-- Buttons -->
     <div class="col-md-3 d-flex gap-2">
       <button class="btn btn-secondary w-50" type="submit">Apply</button>
       <a href="{{ url_for('main_bp.tasks') }}" class="btn btn-light w-50">Reset</a>
@@ -67,9 +80,9 @@
                 {% endif %}
               </td>
               <td>
-                {% if task.status == "Completed" %}
+                {% if task.status == "completed" %}
                   <span class="badge bg-success">Completed</span>
-                {% elif task.status == "In Progress" %}
+                {% elif task.status == "in_progress" %}
                   <span class="badge bg-info text-dark">In Progress</span>
                 {% else %}
                   <span class="badge bg-secondary">Pending</span>
@@ -77,10 +90,12 @@
               </td>
               <td>{{ task.due_date or "-" }}</td>
               <td>
+                <!-- Edit Button -->
                 <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editTask{{ task.id }}">
                   Edit
                 </button>
-                <form method="POST" action="{{ url_for('main_bp.remove_task', task_id=task.id) }}" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                <!-- Delete Button -->
+                <form method="POST" action="{{ url_for('main_bp.remove_task', task_id=task.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this task?');">
                   <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                 </form>
               </td>
@@ -119,9 +134,9 @@
                       <div class="mb-3">
                         <label>Status</label>
                         <select name="status" class="form-select">
-                          <option value="Pending" {% if task.status=="Pending" %}selected{% endif %}>Pending</option>
-                          <option value="In Progress" {% if task.status=="In Progress" %}selected{% endif %}>In Progress</option>
-                          <option value="Completed" {% if task.status=="Completed" %}selected{% endif %}>Completed</option>
+                          <option value="pending" {% if task.status=="pending" %}selected{% endif %}>Pending</option>
+                          <option value="in_progress" {% if task.status=="in_progress" %}selected{% endif %}>In Progress</option>
+                          <option value="completed" {% if task.status=="completed" %}selected{% endif %}>Completed</option>
                         </select>
                       </div>
                     </div>
@@ -176,9 +191,9 @@
           <div class="mb-3">
             <label>Status</label>
             <select name="status" class="form-select">
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
             </select>
           </div>
         </div>
