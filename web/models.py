@@ -64,8 +64,9 @@ def get_tasks(db_path, user_id, search_term=None, status=None, priority=None, du
     query = "SELECT * FROM tasks WHERE user_id=? AND is_deleted=0"
     params = [user_id]
     if search_term:
-        query += " AND (title LIKE ?)"
-        params.append(f'%{search_term}%')
+        # **FIX IS HERE**: Search in both title AND description
+        query += " AND (title LIKE ? OR description LIKE ?)"
+        params.extend([f'%{search_term}%', f'%{search_term}%'])
     if status:
         query += " AND status = ?"
         params.append(status)
@@ -75,6 +76,7 @@ def get_tasks(db_path, user_id, search_term=None, status=None, priority=None, du
     if due_date:
         query += " AND due_date = ?"
         params.append(due_date)
+
     query += " ORDER BY last_modified DESC"
     with get_db_connection(db_path) as conn:
         return conn.execute(query, tuple(params)).fetchall()
