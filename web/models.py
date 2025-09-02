@@ -184,13 +184,22 @@ def create_expense(db_path, user_id, amount, category, description=None, date=No
         conn.commit()
     return expense_id
 
-def get_expenses(db_path, user_id):
-    """Get all expenses for a user (not deleted)."""
+# --- Update get_expenses FUNCTION (with new filter logic) ---
+def get_expenses(db_path, user_id, search_term=None, start_date=None, end_date=None):
+    query = "SELECT * FROM expenses WHERE user_id=? AND is_deleted=0"
+    params = [user_id]
+    if search_term:
+        query += " AND (category LIKE ? OR description LIKE ?)"
+        params.extend([f'%{search_term}%', f'%{search_term}%'])
+    if start_date:
+        query += " AND date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND date <= ?"
+        params.append(end_date)
+    query += " ORDER BY date DESC"
     with get_db_connection(db_path) as conn:
-        return conn.execute(
-            "SELECT * FROM expenses WHERE user_id=? AND is_deleted=0",
-            (user_id,)
-        ).fetchall()
+        return conn.execute(query, tuple(params)).fetchall()
 
 def update_expense(db_path, expense_id, amount=None, category=None, description=None, date=None):
     """Update any field of an expense."""
