@@ -59,13 +59,26 @@ def create_task(db_path, user_id, title, description=None, due_date=None, priori
         conn.commit()
     return task_id
 
-def get_tasks(db_path, user_id):
-    """Get all tasks for a user (not deleted)."""
+# --- Update get_tasks FUNCTION (with new filter logic) ---
+def get_tasks(db_path, user_id, search_term=None, status=None, priority=None, due_date=None):
+    query = "SELECT * FROM tasks WHERE user_id=? AND is_deleted=0"
+    params = [user_id]
+    if search_term:
+        query += " AND (title LIKE ?)"
+        params.append(f'%{search_term}%')
+    if status:
+        query += " AND status = ?"
+        params.append(status)
+    if priority:
+        query += " AND priority = ?"
+        params.append(priority)
+    if due_date:
+        query += " AND due_date = ?"
+        params.append(due_date)
+    query += " ORDER BY last_modified DESC"
     with get_db_connection(db_path) as conn:
-        return conn.execute(
-            "SELECT * FROM tasks WHERE user_id=? AND is_deleted=0",
-            (user_id,)
-        ).fetchall()
+        return conn.execute(query, tuple(params)).fetchall()
+
 
 def update_task(db_path, task_id, title=None, description=None, due_date=None, priority=None, status=None):
     """Update task details (any field can be updated)."""
