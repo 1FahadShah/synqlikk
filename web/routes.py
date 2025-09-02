@@ -7,10 +7,7 @@ from functools import wraps
 
 main_bp = Blueprint("main_bp", __name__)
 
-#=============================
-# Helper Decorator
-#=============================
-
+# --- Helper Decorator ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -20,15 +17,13 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
-#=============================
-#  --- Main Pages ---
-#=============================
+# --- Main Pages ---
 @main_bp.route("/dashboard")
 @login_required
 def dashboard():
     user_id = session["user_id"]
     db_path = current_app.config["DB_PATH"]
+    # For the dashboard, we get all items without filters
     tasks = get_tasks(db_path, user_id)
     notes = get_notes(db_path, user_id)
     expenses = get_expenses(db_path, user_id)
@@ -39,10 +34,14 @@ def dashboard():
 def tasks_page():
     user_id = session["user_id"]
     db_path = current_app.config["DB_PATH"]
+
+    # **FIX**: Get filter values from URL query parameters (e.g., /tasks?q=mysearch)
     search_term = request.args.get('q')
     status = request.args.get('status')
     priority = request.args.get('priority')
     due_date = request.args.get('due_date')
+
+    # Pass the retrieved filters to the database function
     all_tasks = get_tasks(db_path, user_id, search_term, status, priority, due_date)
     return render_template("tasks.html", tasks=all_tasks)
 
@@ -51,7 +50,10 @@ def tasks_page():
 def notes_page():
     user_id = session["user_id"]
     db_path = current_app.config["DB_PATH"]
+
+    # **FIX**: Get search term from URL
     search_term = request.args.get('q')
+
     all_notes = get_notes(db_path, user_id, search_term)
     return render_template("notes.html", notes=all_notes)
 
@@ -60,9 +62,12 @@ def notes_page():
 def expenses_page():
     user_id = session["user_id"]
     db_path = current_app.config["DB_PATH"]
+
+    # **FIX**: Get filter values from URL
     search_term = request.args.get('q')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
+
     all_expenses = get_expenses(db_path, user_id, search_term, start_date, end_date)
     return render_template("expenses.html", expenses=all_expenses)
 
@@ -72,9 +77,7 @@ def profile_page():
     user = get_user_by_id(current_app.config["DB_PATH"], session["user_id"])
     return render_template("profile.html", user=user)
 
-#=============================
-#  --- Task CRUD Actions ---
-#=============================
+# --- Task CRUD Actions ---
 @main_bp.route("/task/add", methods=["POST"])
 @login_required
 def add_task():
@@ -88,6 +91,7 @@ def add_task():
         status=request.form.get("status", 'pending')
     )
     flash("Task added successfully.", "success")
+    # **IMPROVEMENT**: Redirect back to the tasks page
     return redirect(url_for("main_bp.tasks_page"))
 
 @main_bp.route("/task/edit/<task_id>", methods=["POST"])
@@ -103,6 +107,7 @@ def edit_task(task_id):
         status=request.form.get("status")
     )
     flash("Task updated successfully.", "success")
+    # **IMPROVEMENT**: Redirect back to the previous page (dashboard or tasks page)
     return redirect(request.referrer or url_for('main_bp.tasks_page'))
 
 @main_bp.route("/task/delete/<task_id>", methods=["POST"])
@@ -112,10 +117,7 @@ def remove_task(task_id):
     flash("Task deleted.", "info")
     return redirect(request.referrer or url_for('main_bp.tasks_page'))
 
-#=============================
 # --- Note CRUD Actions ---
-#=============================
-
 @main_bp.route("/note/add", methods=["POST"])
 @login_required
 def add_note():
@@ -141,9 +143,7 @@ def remove_note(note_id):
     flash("Note deleted.", "info")
     return redirect(request.referrer or url_for('main_bp.notes_page'))
 
-#=============================
 # --- Expense CRUD Actions ---
-#=============================
 @main_bp.route("/expense/add", methods=["POST"])
 @login_required
 def add_expense():
