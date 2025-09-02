@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from web.forms import LoginForm, RegisterForm
 from web.models import create_user, get_user_by_username, get_user_by_email
@@ -6,7 +6,7 @@ import os
 
 auth_bp = Blueprint("auth_bp", __name__, template_folder="templates")
 
-DB_PATH = os.getenv("DB_PATH")
+
 
 # =========================
 # Register Route
@@ -15,6 +15,8 @@ DB_PATH = os.getenv("DB_PATH")
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
+        # Get DB_PATH from the current app's config at request time
+        DB_PATH = current_app.config['DB_PATH']
         username = form.username.data.strip()
         email = form.email.data.strip() if form.email.data else None
         password = form.password.data
@@ -46,6 +48,7 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
+        DB_PATH = current_app.config['DB_PATH']
         username = form.username.data.strip()
         password = form.password.data
 
