@@ -138,13 +138,16 @@ def create_note(db_path, user_id, content):
         conn.commit()
     return note_id
 
-def get_notes(db_path, user_id):
-    """Get all notes for a user (not deleted)."""
+# --- Update get_notes FUNCTION (with new filter logic) ---
+def get_notes(db_path, user_id, search_term=None):
+    query = "SELECT * FROM notes WHERE user_id=? AND is_deleted=0"
+    params = [user_id]
+    if search_term:
+        query += " AND content LIKE ?"
+        params.append(f'%{search_term}%')
+    query += " ORDER BY last_modified DESC"
     with get_db_connection(db_path) as conn:
-        return conn.execute(
-            "SELECT * FROM notes WHERE user_id=? AND is_deleted=0",
-            (user_id,)
-        ).fetchall()
+        return conn.execute(query, tuple(params)).fetchall()
 
 def update_note(db_path, note_id, content):
     """Update the content of a note."""
