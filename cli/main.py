@@ -1,7 +1,7 @@
 # cli/main.py
 import sys
-from colorama import init, Fore, Style
-from cli import menus, tasks, notes, expenses
+from colorama import init, Fore
+from cli import menus, tasks, notes, expenses, sync
 from cli.auth import login, register, is_authenticated, clear_session
 
 init(autoreset=True)
@@ -25,14 +25,15 @@ def main_menu():
         elif choice == "3":
             menus.expenses_menu()
         elif choice == "4":
-            print(Fore.GREEN + "🔄 Syncing with server... (stub)")
-            # TODO: call sync.sync_all()
+            print(Fore.GREEN + "🔄 Syncing with server...")
+            sync.sync_all()
         elif choice == "5":
             print(Fore.RED + "🚪 Logging out...")
             clear_session()
             sys.exit(0)
         else:
             print(Fore.RED + "❌ Invalid choice, try again!")
+
 
 def auth_menu():
     """Display login/register menu."""
@@ -65,6 +66,7 @@ def auth_menu():
             sys.exit(0)
         else:
             print(Fore.RED + "❌ Invalid choice!")
+
 
 if __name__ == "__main__":
     if is_authenticated():
