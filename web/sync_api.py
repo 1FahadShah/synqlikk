@@ -4,7 +4,7 @@ from web.models import (
     get_tasks, create_task, update_task, delete_task,
     get_notes, create_note, update_note, delete_note,
     get_expenses, create_expense, update_expense, delete_expense,
-    get_user_by_username # Import the missing model function
+    get_user_by_username, create_user # Import the missing model function
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
