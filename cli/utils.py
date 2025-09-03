@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime
 import uuid
 from colorama import init, Fore, Style
+from db.connection import get_connection as db_connect
 
 # Initialize Colorama
 init(autoreset=True)
@@ -28,11 +29,12 @@ def print_error(msg):
 # ==========================
 LOCAL_DB_PATH = Path(__file__).resolve().parent.parent / 'db' / 'local_cache.db'
 
-def get_db_connection(db_path=LOCAL_DB_PATH):
-    """Return a SQLite connection with foreign keys enabled."""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON;")
+def get_db_connection(db_path=None):
+    """Return DB connection; fallback to default local_cache.db"""
+    if db_path is None:
+        conn = db_connect()  # uses default local_cache.db
+    else:
+        conn = db_connect(db_path)
     return conn
 
 # ==========================
