@@ -1,6 +1,8 @@
 import sqlite3
 import uuid
 from web.utils import get_db_connection, current_timestamp
+from werkzeug.security import check_password_hash
+
 
 # ========================
 # Users
@@ -237,4 +239,21 @@ def delete_expense(db_path, expense_id):
             "UPDATE expenses SET is_deleted=1, deleted_at=?, last_modified=? WHERE id=?",
             (current_timestamp(), current_timestamp(), expense_id)
         )
+        conn.commit()
+
+
+def get_item_by_id(db_path, table_name: str, item_id: str):
+    with get_db_connection(db_path) as conn:
+        return conn.execute(f"SELECT * FROM {table_name} WHERE id=?", (item_id,)).fetchone()
+
+def get_items_since(db_path, table_name: str, user_id: str, timestamp: str):
+    with get_db_connection(db_path) as conn:
+        return conn.execute(f"SELECT * FROM {table_name} WHERE user_id=? AND last_modified > ?", (user_id, timestamp)).fetchall()
+
+def create_or_update_item(db_path, table_name: str, item: dict):
+    columns = ', '.join(item.keys())
+    placeholders = ', '.join(['?'] * len(item))
+    values = tuple(item.values())
+    with get_db_connection(db_path) as conn:
+        conn.execute(f"INSERT OR REPLACE INTO {table_name} ({columns}) VALUES ({placeholders})", values)
         conn.commit()
