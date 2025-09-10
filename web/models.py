@@ -247,9 +247,23 @@ def get_item_by_id(db_path, table_name: str, item_id: str):
     with get_db_connection(db_path) as conn:
         return conn.execute(f"SELECT * FROM {table_name} WHERE id=?", (item_id,)).fetchone()
 
-def get_items_since(db_path, table_name: str, user_id: str, timestamp: str):
+def get_items_since(db_path, table_name: str, user_id: str, timestamp: str = None):
+    """
+    Generic function to get all items of a type.
+    If timestamp is provided, it only gets items modified since that time.
+    Otherwise, it gets ALL items for the user.
+    """
     with get_db_connection(db_path) as conn:
-        return conn.execute(f"SELECT * FROM {table_name} WHERE user_id=? AND last_modified > ?", (user_id, timestamp)).fetchall()
+        if timestamp:
+            # This is for a normal delta sync
+            query = f"SELECT * FROM {table_name} WHERE user_id=? AND last_modified > ?"
+            params = (user_id, timestamp)
+        else:
+            # **FIX IS HERE**: This is for the initial hydration sync
+            query = f"SELECT * FROM {table_name} WHERE user_id=?"
+            params = (user_id,)
+
+        return conn.execute(query, params).fetchall()
 
 def create_or_update_item(db_path, table_name: str, item: dict):
     columns = ', '.join(item.keys())
@@ -258,3 +272,29 @@ def create_or_update_item(db_path, table_name: str, item: dict):
     with get_db_connection(db_path) as conn:
         conn.execute(f"INSERT OR REPLACE INTO {table_name} ({columns}) VALUES ({placeholders})", values)
         conn.commit()
+
+
+# models.py
+
+def get_all_items(db_path, table, user_id):
+    """Fetch ALL non-deleted items for a given user."""
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        f"SELECT * FROM {table} WHERE user_id = ? AND is_deleted = 0",
+        (user_id,)
+    ).fetchall()
+    conn.close()
+    return rows
+
+
+def get_deleted_items(db_path, table, user_id):
+    """Fetch ALL deleted items for a given user."""
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        f"SELECT id FROM {table} WHERE user_id = ? AND is_deleted = 1",
+        (user_id,)
+    ).fetchall()
+    conn.close()
+    return rows

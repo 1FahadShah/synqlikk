@@ -89,7 +89,7 @@ def sync_data(user_id):
 
     response_payload = {"tasks": [], "notes": [], "expenses": [], "conflicts": []}
 
-    # Phase 1: Process items pushed FROM the client
+    # Phase 1: Process items pushed FROM the client (This logic is correct)
     for item_type in ["tasks", "notes", "expenses"]:
         for client_item in client_data.get(item_type, []):
             client_item['user_id'] = user_id
@@ -99,10 +99,11 @@ def sync_data(user_id):
             else:
                 response_payload['conflicts'].append(dict(server_item))
 
+    # **FIX IS HERE**: This block now runs correctly even if client_last_sync is None
     # Phase 2: Pull items FROM the server to the client
-    if client_last_sync:
-        for item_type in ["tasks", "notes", "expenses"]:
-            server_changes = models.get_items_since(db_path, item_type, user_id, client_last_sync)
+    for item_type in ["tasks", "notes", "expenses"]:
+        server_changes = models.get_items_since(db_path, item_type, user_id, client_last_sync)
+        if server_changes:
             response_payload[item_type].extend([dict(item) for item in server_changes])
 
     response_payload['server_time'] = current_timestamp()
