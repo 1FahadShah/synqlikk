@@ -5,6 +5,7 @@ from . import models
 import jwt
 import datetime
 from .utils import current_timestamp
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 sync_bp = Blueprint("sync_bp", __name__, url_prefix="/api")
@@ -22,7 +23,9 @@ def api_register():
     if models.get_user_by_username(db_path, username):
         return jsonify({"error": "Username already exists."}), 409
 
-    user_id = models.create_user(db_path, username, password)
+    # **FIX IS HERE**: Hash the password before creating the user
+    password_hash = generate_password_hash(password)
+    user_id = models.create_user(db_path, username, password_hash)
 
     # Generate token immediately using app's secret key
     token = jwt.encode({
@@ -43,7 +46,8 @@ def api_login():
     db_path = current_app.config["DB_PATH"]
     user = models.get_user_by_username(db_path, data.get('username'))
 
-    if not user or not models.check_password_hash(user["password_hash"], data.get('password')):
+    # **FIX**: Use the imported check_password_hash function
+    if not user or not check_password_hash(user["password_hash"], data.get('password')):
         return jsonify({"error": "Invalid credentials"}), 401
 
     token = jwt.encode({

@@ -30,11 +30,17 @@ def print_error(msg):
 LOCAL_DB_PATH = Path(__file__).resolve().parent.parent / 'db' / 'local_cache.db'
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / 'db' / 'schema.sql'
 
+# Flag to ensure initialization happens only once
+LOCAL_DB_INITIALIZED = False
+
 def initialize_local_db():
     """
-    Ensure local_cache.db exists and has the latest schema.
-    Runs on every startup but is safe & idempotent.
+    Initialize the local DB only once per session.
     """
+    global LOCAL_DB_INITIALIZED
+    if LOCAL_DB_INITIALIZED:
+        return  # Already initialized, skip
+
     try:
         if not LOCAL_DB_PATH.exists():
             print_info(f"🆕 Creating new local DB at {LOCAL_DB_PATH}...")
@@ -49,19 +55,19 @@ def initialize_local_db():
         conn.close()
 
         print_success("✅ Local DB initialized successfully.")
+        LOCAL_DB_INITIALIZED = True
     except Exception as e:
         print_error(f"❌ Failed to initialize local DB: {e}")
         raise
 
-
 def get_db_connection(db_path=None):
     """
-    Returns a SQLite connection to local_cache.db.
-    Ensures schema exists before opening the connection.
+    Return a SQLite connection to local_cache.db.
+    Ensures schema exists, but silently if already initialized.
     """
-    initialize_local_db()
+    initialize_local_db()  # prints only once
     if db_path is None:
-        conn = db_connect()  # uses default local_cache.db
+        conn = db_connect()  # default local_cache.db
     else:
         conn = db_connect(db_path)
     return conn
