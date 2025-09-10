@@ -1,7 +1,7 @@
 # cli/utils.py
 import sqlite3
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from colorama import init, Fore, Style
 from db.connection import get_connection as db_connect
@@ -76,8 +76,9 @@ def get_db_connection(db_path=None):
 # Utility helpers
 # ==========================
 def current_timestamp():
-    """Return current UTC timestamp in ISO format."""
-    return datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    """Returns the current time in UTC ISO 8601 format with 'Z'."""
+    # **FIX IS HERE**: Use timezone.utc to make the timestamp aware
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 def generate_uuid():
     """Return a new UUID string."""

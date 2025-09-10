@@ -1,6 +1,6 @@
 import sqlite3
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "db" / "schema.sql"
 
@@ -23,4 +23,6 @@ def get_db_connection(db_path: str):
 
 
 def current_timestamp():
-    return datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    """Returns the current time in UTC ISO 8601 format with 'Z'."""
+    # **FIX IS HERE**: Use timezone.utc to make the timestamp aware
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
