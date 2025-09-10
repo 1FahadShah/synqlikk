@@ -1,19 +1,21 @@
-# cli/sync.py
 import requests
+import json
+from pathlib import Path  # ✅ FIXED
 from .constants import SYNC_ENDPOINT, DEFAULT_TIMEOUT
 from .auth import get_auth_headers, load_session, save_session
 from .utils import get_db_connection, current_timestamp
 from .exceptions import APIError
 
 TABLES = ["tasks", "notes", "expenses"]
+SESSION_FILE = Path(".synqlikk_session.json")
 
 def sync_all():
     """
-    Performs a full two-way sync in a single transaction:
-    1. Gathers all local changes (new, updated, deleted).
-    2. Pushes them to the server in a single batch.
-    3. Receives a batch of server changes in the response.
-    4. Applies server changes and conflicts locally.
+    Performs a full two-way sync:
+    1. Gathers local changes.
+    2. Pushes them to server.
+    3. Applies server updates locally.
+    4. Resolves conflicts.
     """
     print("\n🔄 Starting two-way sync...")
 
@@ -29,34 +31,38 @@ def sync_all():
     conn = get_db_connection()
 
     # --- 1. GATHER LOCAL CHANGES ---
-    payload = {
-        "tasks": [],
-        "notes": [],
-        "expenses": [],
-    }
+    payload = {table: [] for table in TABLES}
 
     for table in TABLES:
-        # Get all rows that have been created or modified locally (synced = 0)
         local_changes = conn.execute(
             f"SELECT * FROM {table} WHERE user_id = ? AND synced = 0",
             (user_id,)
         ).fetchall()
-
         if local_changes:
             payload[table] = [dict(row) for row in local_changes]
 
-    # Add the last sync time to the payload
-    session_data = json.loads(Path('.synqlikk_session.json').read_text())
-    payload['last_sync_time'] = session_data.get('last_sync_time')
+    # Safely read last sync time
+    if SESSION_FILE.exists():
+        try:
+            session_data = json.loads(SESSION_FILE.read_text())
+            payload['last_sync_time'] = session_data.get('last_sync_time')
+        except json.JSONDecodeError:
+            session_data = {}
+            payload['last_sync_time'] = None
+    else:
+        session_data = {}
+        payload['last_sync_time'] = None
 
-    print(f"   Pushing {len(payload['tasks'])} tasks, {len(payload['notes'])} notes, {len(payload['expenses'])} expenses...")
+    print(f"   Pushing {len(payload['tasks'])} tasks, "
+          f"{len(payload['notes'])} notes, "
+          f"{len(payload['expenses'])} expenses...")
 
     # --- 2. PUSH TO SERVER & PULL RESPONSE ---
     try:
         response = requests.post(SYNC_ENDPOINT, json=payload, headers=headers, timeout=DEFAULT_TIMEOUT)
-        response.raise_for_status() # Raise an exception for HTTP errors
+        response.raise_for_status()
         server_data = response.json()
-        print("   Successfully connected to the server.")
+        print("   ✅ Connected to the server.")
     except Exception as e:
         print(f"❌ Sync failed. Could not connect to the server: {e}")
         conn.close()
@@ -67,28 +73,29 @@ def sync_all():
     for table in TABLES:
         for item in server_data.get(table, []):
             items_pulled += 1
-            item['synced'] = 1 # Mark items from server as already synced
+            item['synced'] = 1
             columns = ', '.join(item.keys())
             placeholders = ', '.join(['?'] * len(item))
-            conn.execute(f"INSERT OR REPLACE INTO {table} ({columns}) VALUES ({placeholders})", tuple(item.values()))
+            conn.execute(
+                f"INSERT OR REPLACE INTO {table} ({columns}) VALUES ({placeholders})",
+                tuple(item.values())
+            )
 
     print(f"   Pulled {items_pulled} new/updated items from the server.")
 
     # --- 4. FINALIZE AND CLEAN UP ---
     for table in TABLES:
-        # Mark all successfully pushed items as synced
         conn.execute(f"UPDATE {table} SET synced = 1 WHERE user_id = ? AND synced = 0 AND is_deleted = 0", (user_id,))
-        # Hard delete items that were successfully synced as deleted
         conn.execute(f"DELETE FROM {table} WHERE user_id = ? AND synced = 0 AND is_deleted = 1", (user_id,))
 
     conn.commit()
     conn.close()
 
-    # Save the new server time as our last sync time in the session file
+    # Update session file safely
     session_data['last_sync_time'] = server_data.get('server_time')
-    Path('.synqlikk_session.json').write_text(json.dumps(session_data))
+    SESSION_FILE.write_text(json.dumps(session_data, indent=2))
 
     if server_data.get('conflicts'):
-        print(f"   ⚠️  Resolved {len(server_data['conflicts'])} conflicts (server's version was kept).")
+        print(f"⚠️  Resolved {len(server_data['conflicts'])} conflicts (server version kept).")
 
     print("✅ Sync complete!")

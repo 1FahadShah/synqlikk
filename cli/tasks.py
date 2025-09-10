@@ -1,14 +1,29 @@
-# cli/tasks.py
 import sqlite3
 import uuid
-from cli.utils import get_db_connection, current_timestamp
+from cli.utils import get_db_connection, current_timestamp, print_warning
+from cli.auth import load_session
 
 TABLE = "tasks"
 
+def _get_user_id():
+    _, user_id = load_session()
+    if not user_id:
+        print_warning("⚠️ You must log in before performing this action.")
+        return None
+    return user_id
+
 def view_tasks():
+    user_id = _get_user_id()
+    if not user_id:
+        return
+
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(f"SELECT id, title, description, due_date, priority, status FROM {TABLE} WHERE is_deleted=0")
+    cur.execute(f"""
+        SELECT id, title, description, due_date, priority, status
+        FROM {TABLE}
+        WHERE is_deleted=0 AND user_id=?
+    """, (user_id,))
     rows = cur.fetchall()
     if not rows:
         print("No tasks found.")
@@ -18,6 +33,10 @@ def view_tasks():
     conn.close()
 
 def add_task():
+    user_id = _get_user_id()
+    if not user_id:
+        return
+
     title = input("Title: ").strip()
     description = input("Description: ").strip()
     due_date = input("Due date (YYYY-MM-DD): ").strip()
@@ -30,18 +49,26 @@ def add_task():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(f"""
-        INSERT INTO {TABLE} (id, title, description, due_date, priority, status, last_modified, synced)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-    """, (task_id, title, description, due_date, priority, status, ts))
+        INSERT INTO {TABLE} (id, user_id, title, description, due_date, priority, status, last_modified, synced)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+    """, (task_id, user_id, title, description, due_date, priority, status, ts))
     conn.commit()
     conn.close()
     print("✅ Task added.")
 
 def edit_task():
+    user_id = _get_user_id()
+    if not user_id:
+        return
+
     task_id = input("Enter Task ID to edit: ").strip()
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(f"SELECT title, description, due_date, priority, status FROM {TABLE} WHERE id=? AND is_deleted=0", (task_id,))
+    cur.execute(f"""
+        SELECT title, description, due_date, priority, status
+        FROM {TABLE}
+        WHERE id=? AND is_deleted=0 AND user_id=?
+    """, (task_id, user_id))
     row = cur.fetchone()
     if not row:
         print("Task not found.")
@@ -57,18 +84,26 @@ def edit_task():
     cur.execute(f"""
         UPDATE {TABLE}
         SET title=?, description=?, due_date=?, priority=?, status=?, last_modified=?, synced=0
-        WHERE id=?
-    """, (title, description, due_date, priority, status, ts, task_id))
+        WHERE id=? AND user_id=?
+    """, (title, description, due_date, priority, status, ts, task_id, user_id))
     conn.commit()
     conn.close()
     print("✅ Task updated.")
 
 def delete_task():
+    user_id = _get_user_id()
+    if not user_id:
+        return
+
     task_id = input("Enter Task ID to delete: ").strip()
     ts = current_timestamp()
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(f"UPDATE {TABLE} SET is_deleted=1, deleted_at=?, last_modified=?, synced=0 WHERE id=?", (ts, ts, task_id))
+    cur.execute(f"""
+        UPDATE {TABLE}
+        SET is_deleted=1, deleted_at=?, last_modified=?, synced=0
+        WHERE id=? AND user_id=?
+    """, (ts, ts, task_id, user_id))
     conn.commit()
     conn.close()
     print("✅ Task deleted.")
