@@ -28,9 +28,38 @@ def print_error(msg):
 # Database helpers
 # ==========================
 LOCAL_DB_PATH = Path(__file__).resolve().parent.parent / 'db' / 'local_cache.db'
+SCHEMA_PATH = Path(__file__).resolve().parent.parent / 'db' / 'schema.sql'
+
+def initialize_local_db():
+    """
+    Ensure local_cache.db exists and has the latest schema.
+    Runs on every startup but is safe & idempotent.
+    """
+    try:
+        if not LOCAL_DB_PATH.exists():
+            print_info(f"🆕 Creating new local DB at {LOCAL_DB_PATH}...")
+        else:
+            print_info(f"🔄 Ensuring local DB schema exists at {LOCAL_DB_PATH}...")
+
+        conn = sqlite3.connect(LOCAL_DB_PATH)
+        with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
+            schema_sql = f.read()
+            conn.executescript(schema_sql)
+        conn.commit()
+        conn.close()
+
+        print_success("✅ Local DB initialized successfully.")
+    except Exception as e:
+        print_error(f"❌ Failed to initialize local DB: {e}")
+        raise
+
 
 def get_db_connection(db_path=None):
-    """Return DB connection; fallback to default local_cache.db"""
+    """
+    Returns a SQLite connection to local_cache.db.
+    Ensures schema exists before opening the connection.
+    """
+    initialize_local_db()
     if db_path is None:
         conn = db_connect()  # uses default local_cache.db
     else:
