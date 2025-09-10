@@ -1,6 +1,7 @@
+# cli/main.py
 import sys
 from colorama import init, Fore
-from cli import menus, tasks, notes, expenses, sync
+from cli import menus, tasks, notes, expenses, sync, utils
 from cli.auth import login, register, is_authenticated, clear_session
 
 init(autoreset=True)
@@ -27,6 +28,9 @@ def main_menu():
             print(Fore.GREEN + "🔄 Syncing with server...")
             sync.sync_all()
         elif choice == "5":
+            if is_authenticated():
+                print(Fore.GREEN + "🔄 Syncing final changes before logout...")
+                sync.sync_all()
             print(Fore.RED + "🚪 Logging out...")
             clear_session()
             sys.exit(0)
@@ -47,7 +51,7 @@ def auth_menu():
             username = input("Username: ").strip()
             password = input("Password: ").strip()
             try:
-                login(username, password)  # ✅ Force full sync inside login
+                login(username, password)  # Full sync handled inside login
                 break
             except Exception as e:
                 print(Fore.RED + f"❌ {e}")
@@ -55,7 +59,7 @@ def auth_menu():
             username = input("Username: ").strip()
             password = input("Password: ").strip()
             try:
-                register(username, password)  # ✅ Force full sync inside register
+                register(username, password)  # Full sync handled inside register
                 break
             except Exception as e:
                 print(Fore.RED + f"❌ {e}")
@@ -66,10 +70,26 @@ def auth_menu():
             print(Fore.RED + "❌ Invalid choice!")
 
 if __name__ == "__main__":
-    if is_authenticated():
-        print(Fore.CYAN + "🔄 Syncing all server records to local DB...")
-        sync.sync_all(force_full=True)  # ✅ Full sync even if session exists
-        main_menu()
-    else:
-        auth_menu()
-        main_menu()
+    # --- NEW UPDATE ---
+    # Initialize the local DB once at the start
+    utils.initialize_local_db()
+
+    try:
+        if is_authenticated():
+            print(Fore.CYAN + "🔄 Syncing all server records to local DB...")
+            sync.sync_all(force_full=True)  # Full sync even if session exists
+            main_menu()
+        else:
+            auth_menu()
+            main_menu()
+    except KeyboardInterrupt:
+        # Handle Ctrl+C exit
+        print(Fore.YELLOW + "\n\n⚡ Exit detected (Ctrl+C).")
+        if is_authenticated():
+            print(Fore.GREEN + "🔄 Syncing final changes before exit...")
+            sync.sync_all()
+        print(Fore.CYAN + "Goodbye!")
+        sys.exit(0)
+    except Exception as e:
+        print(Fore.RED + f"\nAn unexpected error occurred: {e}")
+        sys.exit(1)
