@@ -1,4 +1,3 @@
-# cli/main.py
 import sys
 from colorama import init, Fore
 from cli import menus, tasks, notes, expenses, sync
@@ -34,7 +33,6 @@ def main_menu():
         else:
             print(Fore.RED + "❌ Invalid choice, try again!")
 
-
 def auth_menu():
     """Display login/register menu."""
     while True:
@@ -49,7 +47,7 @@ def auth_menu():
             username = input("Username: ").strip()
             password = input("Password: ").strip()
             try:
-                login(username, password)
+                login(username, password)  # ✅ Force full sync inside login
                 break
             except Exception as e:
                 print(Fore.RED + f"❌ {e}")
@@ -57,7 +55,7 @@ def auth_menu():
             username = input("Username: ").strip()
             password = input("Password: ").strip()
             try:
-                register(username, password)
+                register(username, password)  # ✅ Force full sync inside register
                 break
             except Exception as e:
                 print(Fore.RED + f"❌ {e}")
@@ -67,9 +65,10 @@ def auth_menu():
         else:
             print(Fore.RED + "❌ Invalid choice!")
 
-
 if __name__ == "__main__":
     if is_authenticated():
+        print(Fore.CYAN + "🔄 Syncing all server records to local DB...")
+        sync.sync_all(force_full=True)  # ✅ Full sync even if session exists
         main_menu()
     else:
         auth_menu()

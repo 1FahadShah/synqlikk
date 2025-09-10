@@ -4,13 +4,12 @@ from functools import wraps
 from . import models
 import jwt
 import datetime
+from .utils import current_timestamp
+
 
 sync_bp = Blueprint("sync_bp", __name__, url_prefix="/api")
 
-# IMPORTANT: This secret key should be loaded from your .env file
-JWT_SECRET = 'your-super-secret-key-for-jwt'
-
-# --- API Authentication Routes (Must be in this file) ---
+# --- API Authentication Routes ---
 @sync_bp.route("/register", methods=["POST"])
 def api_register():
     data = request.json
@@ -24,7 +23,19 @@ def api_register():
         return jsonify({"error": "Username already exists."}), 409
 
     user_id = models.create_user(db_path, username, password)
-    return jsonify({"message": "User created successfully", "user_id": user_id}), 201
+
+    # Generate token immediately using app's secret key
+    token = jwt.encode({
+        'user_id': user_id,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+    }, current_app.config['SECRET_KEY'], algorithm="HS256")
+
+    return jsonify({
+        "message": "User created successfully",
+        "user_id": user_id,
+        "token": token
+    }), 201
+
 
 @sync_bp.route("/login", methods=["POST"])
 def api_login():
@@ -37,9 +48,11 @@ def api_login():
 
     token = jwt.encode({
         'user_id': user['id'],
-        'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
-    }, JWT_SECRET, algorithm="HS256")
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+    }, current_app.config['SECRET_KEY'], algorithm="HS256")
+
     return jsonify({"token": token, "user_id": user['id']})
+
 
 # --- Token-based Authentication Decorator ---
 def token_required(f):
@@ -47,16 +60,23 @@ def token_required(f):
     def decorated(*args, **kwargs):
         token = None
         if 'Authorization' in request.headers:
-            token = request.headers['Authorization'].split(" ")[1]
+            parts = request.headers['Authorization'].split(" ")
+            if len(parts) == 2 and parts[0] == "Bearer":
+                token = parts[1]
+
         if not token:
             return jsonify({"error": "Unauthorized: Token is missing"}), 401
+
         try:
-            data = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-            # Pass user_id to the wrapped function
+            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
             return f(user_id=data['user_id'], *args, **kwargs)
-        except:
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Unauthorized: Token has expired"}), 401
+        except jwt.InvalidTokenError:
             return jsonify({"error": "Unauthorized: Token is invalid"}), 401
+
     return decorated
+
 
 # --- Main Sync Endpoint ---
 @sync_bp.route('/sync', methods=['POST'])
@@ -72,7 +92,7 @@ def sync_data(user_id):
     # Phase 1: Process items pushed FROM the client
     for item_type in ["tasks", "notes", "expenses"]:
         for client_item in client_data.get(item_type, []):
-            client_item['user_id'] = user_id # Ensure correct user_id
+            client_item['user_id'] = user_id
             server_item = models.get_item_by_id(db_path, item_type, client_item['id'])
             if server_item is None or client_item['last_modified'] > server_item['last_modified']:
                 models.create_or_update_item(db_path, item_type, client_item)
@@ -85,5 +105,5 @@ def sync_data(user_id):
             server_changes = models.get_items_since(db_path, item_type, user_id, client_last_sync)
             response_payload[item_type].extend([dict(item) for item in server_changes])
 
-    response_payload['server_time'] = models.utils.current_timestamp()
+    response_payload['server_time'] = current_timestamp()
     return jsonify(response_payload)

@@ -9,15 +9,21 @@ from .exceptions import APIError
 TABLES = ["tasks", "notes", "expenses"]
 SESSION_FILE = Path(".synqlikk_session.json")
 
-def sync_all():
+
+def sync_all(force_full: bool = False):
     """
     Performs a full two-way sync:
     1. Gathers local changes.
     2. Pushes them to server.
     3. Applies server updates locally.
     4. Resolves conflicts.
+
+    If force_full=True, performs a full pull of all server records to local DB.
     """
-    print("\n🔄 Starting two-way sync...")
+    if force_full:
+        print("\n🔄 Pulling all server data (full sync)...")
+    else:
+        print("\n🔄 Starting two-way sync...")
 
     try:
         headers = get_auth_headers()
@@ -33,19 +39,20 @@ def sync_all():
     # --- 1. GATHER LOCAL CHANGES ---
     payload = {table: [] for table in TABLES}
 
-    for table in TABLES:
-        local_changes = conn.execute(
-            f"SELECT * FROM {table} WHERE user_id = ? AND synced = 0",
-            (user_id,)
-        ).fetchall()
-        if local_changes:
-            payload[table] = [dict(row) for row in local_changes]
+    if not force_full:
+        for table in TABLES:
+            local_changes = conn.execute(
+                f"SELECT * FROM {table} WHERE user_id = ? AND synced = 0",
+                (user_id,)
+            ).fetchall()
+            if local_changes:
+                payload[table] = [dict(row) for row in local_changes]
 
     # Safely read last sync time
     if SESSION_FILE.exists():
         try:
             session_data = json.loads(SESSION_FILE.read_text())
-            payload['last_sync_time'] = session_data.get('last_sync_time')
+            payload['last_sync_time'] = None if force_full else session_data.get('last_sync_time')
         except json.JSONDecodeError:
             session_data = {}
             payload['last_sync_time'] = None
@@ -53,9 +60,10 @@ def sync_all():
         session_data = {}
         payload['last_sync_time'] = None
 
-    print(f"   Pushing {len(payload['tasks'])} tasks, "
-          f"{len(payload['notes'])} notes, "
-          f"{len(payload['expenses'])} expenses...")
+    if not force_full:
+        print(f"   Pushing {len(payload['tasks'])} tasks, "
+              f"{len(payload['notes'])} notes, "
+              f"{len(payload['expenses'])} expenses...")
 
     # --- 2. PUSH TO SERVER & PULL RESPONSE ---
     try:
