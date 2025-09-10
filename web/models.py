@@ -47,19 +47,20 @@ def get_user_by_id(db_path, user_id: str):
 # ========================
 # Tasks
 # ========================
-def create_task(db_path, user_id, title, description=None, due_date=None, priority=2):
+def create_task(db_path, user_id, title, description=None, due_date=None, priority=2, status='pending'):
     """Create a new task for a user."""
     task_id = str(uuid.uuid4())
     with get_db_connection(db_path) as conn:
         conn.execute(
             """
-            INSERT INTO tasks (id, user_id, title, description, due_date, priority, last_modified)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO tasks (id, user_id, title, description, due_date, priority, status, last_modified)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (task_id, user_id, title, description, due_date, priority, current_timestamp())
+            (task_id, user_id, title, description, due_date, priority, status, current_timestamp())
         )
         conn.commit()
     return task_id
+
 
 # --- Update get_tasks FUNCTION (with new filter logic) ---
 def get_tasks(db_path, user_id, search_term=None, status=None, priority=None, due_date=None):
