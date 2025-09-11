@@ -1,0 +1,36 @@
+from flask import Flask
+from .auth import auth_bp
+from .routes import main_bp
+from .sync_api import sync_bp
+from .utils import init_server_db
+from dotenv import load_dotenv
+import os
+
+def create_app():
+
+    load_dotenv()
+
+    app = Flask(__name__)
+
+    # Load configuration (secret key, DB path)
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    app.config['DB_PATH'] = os.getenv('DB_PATH')
+
+    # Initialize server database if not exists
+    init_server_db(app.config['DB_PATH'])
+
+    # Register Blueprints
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
+    app.register_blueprint(sync_bp)
+
+    # Tell Flask that the root URL ('/') should point to the dashboard.
+    app.add_url_rule('/', endpoint='main_bp.dashboard')
+
+    return app
+
+
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True)
