@@ -11,7 +11,7 @@ LOCAL_DB_PATH = DB_DIR / 'local_cache.db'
 # ==========================
 # Server API
 # ==========================
-SERVER_API_URL = 'http://127.0.0.1:5000/api'
+SERVER_API_URL = 'https://synqlikk-demo.1fahadshah.com/api'
 LOGIN_ENDPOINT = f'{SERVER_API_URL}/login'
 REGISTER_ENDPOINT = f'{SERVER_API_URL}/register'
 SYNC_ENDPOINT = f'{SERVER_API_URL}/sync'
