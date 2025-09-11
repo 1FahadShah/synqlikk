@@ -1,4 +1,3 @@
-````markdown
 # SynQlikk Web
 
 **SynQlikk Web** is the web-based extension of the SynQlikk ecosystem, providing a full-featured task, note, and expense management platform. It offers a terminal-first inspired workflow for the web, with offline persistence, cloud sync, user authentication, and an intuitive dashboard.
@@ -7,23 +6,28 @@
 
 ## Table of Contents
 
-- [Installation](#installation)
-- [Getting Started](#getting-started)
-- [Authentication](#authentication)
-  - [Register](#register)
-  - [Login](#login)
-  - [Logout](#logout)
-- [Main Dashboard](#main-dashboard)
-- [Features](#features)
-  - [Tasks](#tasks)
-  - [Notes](#notes)
-  - [Expenses](#expenses)
-- [API / Sync](#api--sync)
-- [Database](#database)
-- [Error Handling](#error-handling)
-- [Utilities](#utilities)
-- [Example Workflows](#example-workflows)
-- [License](#license)
+- [SynQlikk Web](#synqlikk-web)
+  - [Table of Contents](#table-of-contents)
+  - [Installation](#installation)
+  - [Getting Started](#getting-started)
+  - [Authentication](#authentication)
+    - [Register](#register)
+    - [Login](#login)
+    - [Logout](#logout)
+  - [Main Dashboard](#main-dashboard)
+  - [Features](#features)
+    - [Tasks](#tasks)
+    - [Notes](#notes)
+    - [Expenses](#expenses)
+  - [API / Sync](#api--sync)
+    - [Register](#register-1)
+    - [Login](#login-1)
+    - [Sync](#sync)
+  - [Database](#database)
+  - [Error Handling](#error-handling)
+  - [Utilities](#utilities)
+  - [Example Workflows](#example-workflows)
+  - [License](#license)
 
 ---
 
@@ -327,4 +331,3 @@ Common table columns:
 MIT License
 
 **SynQlikk Web** – Full-featured task, note, and expense management platform with cloud sync and token-based API. Perfect for personal or professional use.
-````
