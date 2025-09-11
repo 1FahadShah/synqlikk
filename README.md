@@ -1,6 +1,6 @@
 # SynQlikk: An Offline-First Personal Organizer
 
-**Video Demo:** https://youtu.be/ZMGj41IWlFk
+**Video Demo:** https://youtu.be/1EqKC0cAnso
 <br>
 **Live Demo:** https://synqlikk-demo.1fahadshah.com
 <br>
