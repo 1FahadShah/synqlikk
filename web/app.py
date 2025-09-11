@@ -1,8 +1,8 @@
 from flask import Flask
-from web.auth import auth_bp
-from web.routes import main_bp
-from web.sync_api import sync_bp
-from web.utils import init_server_db
+from .auth import auth_bp
+from .routes import main_bp
+from .sync_api import sync_bp
+from .utils import init_server_db
 from dotenv import load_dotenv
 import os
 
