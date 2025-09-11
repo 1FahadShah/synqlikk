@@ -6,6 +6,9 @@ from cli.auth import load_session
 
 TABLE = "tasks"
 
+# Standardized status options
+STATUS_OPTIONS = ["pending", "in_progress", "completed"]
+
 def _get_user_id():
     _, user_id = load_session()
     if not user_id:
@@ -42,7 +45,6 @@ def view_tasks():
     ]
     print("\n" + tabulate(table_data, headers=headers, tablefmt="grid"))
 
-    # Return full dicts for other functions
     return [
         {"id": r[0], "title": r[1], "description": r[2], "due_date": r[3], "priority": r[4], "status": r[5]}
         for r in rows
@@ -58,10 +60,10 @@ def add_task():
         print("❌ Title is required.")
         return
 
-    description = input("Description: ").strip()
-    due_date = input("Due date (YYYY-MM-DD): ").strip()
+    description = input("Description (optional): ").strip()
+    due_date = input("Due date (YYYY-MM-DD, optional): ").strip()
     priority = input("Priority (1=High, 2=Medium, 3=Low) [2]: ").strip() or "2"
-    status = "pending"
+    status = "pending"  # new tasks always start as pending
 
     task_id = str(uuid.uuid4())
     ts = current_timestamp()
@@ -99,7 +101,20 @@ def edit_task():
     description = input(f"Description [{task['description']}]: ").strip() or task['description']
     due_date = input(f"Due date [{task['due_date']}]: ").strip() or task['due_date']
     priority = input(f"Priority [{task['priority']}]: ").strip() or task['priority']
-    status = input(f"Status [{task['status']}]: ").strip() or task['status']
+
+    # status selection menu (final fix)
+    print("\nSelect a new status:")
+    for i, option in enumerate(STATUS_OPTIONS, 1):
+        print(f"  {i}. {option.replace('_', ' ').title()}")
+    status_choice = input(f"Status [{task['status']}]: ").strip()
+    if status_choice:
+        try:
+            status = STATUS_OPTIONS[int(status_choice) - 1]
+        except (ValueError, IndexError):
+            print("\n⚠️ Invalid status selection. Keeping original value.")
+            status = task['status']
+    else:
+        status = task['status']
 
     ts = current_timestamp()
     conn = get_db_connection()
